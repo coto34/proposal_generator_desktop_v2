@@ -50,47 +50,268 @@ class ProposalWizard(ttk.Frame):
         self._build_tab5()
 
     def _build_tab1(self):
-        frm = ttk.Frame(self.tab1)
-        frm.pack(fill="x", expand=False)
+        # Create scrollable frame for project information
+        canvas = tk.Canvas(self.tab1)
+        scrollbar = ttk.Scrollbar(self.tab1, orient="vertical", command=canvas.yview)
+        scrollable_frame = ttk.Frame(canvas)
+        
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+        
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+        
+        # Main project information
+        main_frame = ttk.LabelFrame(scrollable_frame, text="Información General del Proyecto", padding=10)
+        main_frame.pack(fill="x", pady=5)
 
         self.title_var = tk.StringVar()
-        self.country_var = tk.StringVar()
+        self.country_var = tk.StringVar(value="Guatemala")  # Default to Guatemala
         self.lang_var = tk.StringVar(value="es")
         self.donor_var = tk.StringVar()
         self.duration_var = tk.StringVar()
         self.cap_var = tk.StringVar()
-        self.org_var = tk.Text(self.tab1, height=6, wrap="word")
 
-        LabeledEntry(frm, "Título del proyecto", self.title_var).pack(fill="x", pady=6)
-        LabeledEntry(frm, "País", self.country_var).pack(fill="x", pady=6)
+        LabeledEntry(main_frame, "Título del proyecto *", self.title_var).pack(fill="x", pady=6)
+        
+        # Country and language row
+        country_lang_frame = ttk.Frame(main_frame)
+        country_lang_frame.pack(fill="x", pady=6)
+        
+        country_frame = ttk.Frame(country_lang_frame)
+        country_frame.pack(side="left", fill="x", expand=True, padx=(0, 10))
+        ttk.Label(country_frame, text="País *").pack(anchor="w")
+        ttk.Entry(country_frame, textvariable=self.country_var).pack(fill="x")
+        
+        lang_frame = ttk.Frame(country_lang_frame)
+        lang_frame.pack(side="right")
+        ttk.Label(lang_frame, text="Idioma").pack(anchor="w")
+        ttk.Combobox(lang_frame, textvariable=self.lang_var, values=["es","en"], state="readonly", width=8).pack()
 
-        lang_row = ttk.Frame(frm); lang_row.pack(fill="x", pady=6)
-        ttk.Label(lang_row, text="Idioma").pack(side="left")
-        ttk.Combobox(lang_row, textvariable=self.lang_var, values=["es","en"], state="readonly", width=8).pack(side="left", padx=8)
+        LabeledEntry(main_frame, "Donante/Financiador *", self.donor_var).pack(fill="x", pady=6)
+        
+        # Duration and budget row
+        duration_budget_frame = ttk.Frame(main_frame)
+        duration_budget_frame.pack(fill="x", pady=6)
+        
+        duration_frame = ttk.Frame(duration_budget_frame)
+        duration_frame.pack(side="left", fill="x", expand=True, padx=(0, 10))
+        ttk.Label(duration_frame, text="Duración (meses) *").pack(anchor="w")
+        ttk.Entry(duration_frame, textvariable=self.duration_var).pack(fill="x")
+        
+        budget_frame = ttk.Frame(duration_budget_frame)
+        budget_frame.pack(side="right", fill="x", expand=True)
+        ttk.Label(budget_frame, text="Tope de presupuesto").pack(anchor="w")
+        # FIXED: Removed placeholder_text parameter
+        budget_entry = ttk.Entry(budget_frame, textvariable=self.cap_var)
+        budget_entry.pack(fill="x")
+        
+        # Add help text below budget entry
+        budget_help = ttk.Label(budget_frame, text="ej: $50,000 USD", font=('TkDefaultFont', 8), foreground='gray')
+        budget_help.pack(anchor="w", pady=(2, 0))
 
-        LabeledEntry(frm, "Donante", self.donor_var).pack(fill="x", pady=6)
-        LabeledEntry(frm, "Duración (meses)", self.duration_var).pack(fill="x", pady=6)
-        LabeledEntry(frm, "Tope de presupuesto", self.cap_var).pack(fill="x", pady=6)
+        # Location Details Section
+        location_frame = ttk.LabelFrame(scrollable_frame, text="Ubicación del Proyecto", padding=10)
+        location_frame.pack(fill="x", pady=5)
+        
+        # Geographic location variables
+        self.department_var = tk.StringVar()
+        self.municipality_var = tk.StringVar()
+        self.community_var = tk.StringVar()
+        self.geographic_coords_var = tk.StringVar()
+        self.coverage_type_var = tk.StringVar(value="Local")
+        
+        # Coverage type
+        coverage_frame = ttk.Frame(location_frame)
+        coverage_frame.pack(fill="x", pady=6)
+        ttk.Label(coverage_frame, text="Cobertura del proyecto").pack(anchor="w")
+        coverage_combo = ttk.Combobox(coverage_frame, textvariable=self.coverage_type_var, 
+                                    values=["Local", "Municipal", "Departamental", "Regional", "Nacional"], 
+                                    state="readonly", width=15)
+        coverage_combo.pack(anchor="w")
+        
+        # Department and Municipality row
+        dept_muni_frame = ttk.Frame(location_frame)
+        dept_muni_frame.pack(fill="x", pady=6)
+        
+        dept_frame = ttk.Frame(dept_muni_frame)
+        dept_frame.pack(side="left", fill="x", expand=True, padx=(0, 10))
+        ttk.Label(dept_frame, text="Departamento").pack(anchor="w")
+        dept_combo = ttk.Combobox(dept_frame, textvariable=self.department_var,
+                                values=[
+                                    "Alta Verapaz", "Baja Verapaz", "Chimaltenango", "Chiquimula",
+                                    "El Progreso", "Escuintla", "Guatemala", "Huehuetenango",
+                                    "Izabal", "Jalapa", "Jutiapa", "Petén", "Quetzaltenango",
+                                    "Quiché", "Retalhuleu", "Sacatepéquez", "San Marcos",
+                                    "Santa Rosa", "Sololá", "Suchitepéquez", "Totonicapán", "Zacapa"
+                                ])
+        dept_combo.pack(fill="x")
+        
+        muni_frame = ttk.Frame(dept_muni_frame)
+        muni_frame.pack(side="right", fill="x", expand=True)
+        ttk.Label(muni_frame, text="Municipio").pack(anchor="w")
+        ttk.Entry(muni_frame, textvariable=self.municipality_var).pack(fill="x")
+        
+        # Community/Village and coordinates
+        LabeledEntry(location_frame, "Comunidad/Aldea (opcional)", self.community_var).pack(fill="x", pady=6)
+        LabeledEntry(location_frame, "Coordenadas geográficas (opcional)", 
+                    self.geographic_coords_var).pack(fill="x", pady=6)
+        
+        # Add help text for coordinates
+        coord_help = ttk.Label(location_frame, 
+                            text="Formato: Latitud, Longitud (ej: 14.6349, -90.5069)",
+                            font=('TkDefaultFont', 8), foreground='gray')
+        coord_help.pack(anchor="w", padx=(0, 0), pady=(0, 6))
 
-        org_box = ttk.Frame(self.tab1); org_box.pack(fill="both", expand=True, pady=10)
-        ttk.Label(org_box, text="Perfil de la organización").pack(anchor="w")
-        self.org_var.pack(fill="both", expand=True)
+        # Target Population Section
+        target_frame = ttk.LabelFrame(scrollable_frame, text="Población Objetivo", padding=10)
+        target_frame.pack(fill="x", pady=5)
+        
+        self.target_population_var = tk.StringVar()
+        self.beneficiaries_direct_var = tk.StringVar()
+        self.beneficiaries_indirect_var = tk.StringVar()
+        self.demographic_focus_var = tk.StringVar()
+        
+        # Target population description
+        ttk.Label(target_frame, text="Descripción de la población objetivo").pack(anchor="w")
+        target_text = tk.Text(target_frame, height=3, wrap="word")
+        target_text.pack(fill="x", pady=6)
+        self.target_population_text = target_text
+        
+        # Beneficiaries row
+        beneficiaries_frame = ttk.Frame(target_frame)
+        beneficiaries_frame.pack(fill="x", pady=6)
+        
+        direct_frame = ttk.Frame(beneficiaries_frame)
+        direct_frame.pack(side="left", fill="x", expand=True, padx=(0, 10))
+        ttk.Label(direct_frame, text="Beneficiarios directos").pack(anchor="w")
+        ttk.Entry(direct_frame, textvariable=self.beneficiaries_direct_var).pack(fill="x")
+        
+        indirect_frame = ttk.Frame(beneficiaries_frame)
+        indirect_frame.pack(side="right", fill="x", expand=True)
+        ttk.Label(indirect_frame, text="Beneficiarios indirectos").pack(anchor="w")
+        ttk.Entry(indirect_frame, textvariable=self.beneficiaries_indirect_var).pack(fill="x")
+        
+        # Demographic focus
+        ttk.Label(target_frame, text="Enfoque demográfico").pack(anchor="w", pady=(6, 0))
+        demo_combo = ttk.Combobox(target_frame, textvariable=self.demographic_focus_var,
+                                values=[
+                                    "Población general", "Mujeres", "Jóvenes", "Pueblos indígenas",
+                                    "Personas con discapacidad", "Adultos mayores", 
+                                    "Familias rurales", "Microempresarios", "Líderes comunitarios"
+                                ])
+        demo_combo.pack(fill="x", pady=6)
 
-        save_btn = ttk.Button(self.tab1, text="Guardar datos", command=self._save_project_inputs)
-        save_btn.pack(anchor="e", pady=8)
+        # IEPADES Organization Profile Section (Pre-filled but editable)
+        org_frame = ttk.LabelFrame(scrollable_frame, text="Perfil de IEPADES (Organización Ejecutora)", padding=10)
+        org_frame.pack(fill="both", expand=True, pady=5)
+        
+        # Pre-filled with IEPADES information
+        iepades_profile = """El Instituto de Enseñanza para el Desarrollo Sostenible (IEPADES) es una organización no gubernamental fundada hace más de 30 años en Guatemala. Su misión principal ha sido promover la paz, la democracia y el desarrollo sostenible, especialmente en comunidades rurales y vulnerables.
+
+    Desde sus inicios, IEPADES ha trabajado para fortalecer el poder local, fomentar la justicia social y apoyar la autogestión comunitaria. A lo largo de su trayectoria, ha desarrollado proyectos enfocados en la construcción de paz, la prevención de la violencia y el fortalecimiento de capacidades locales.
+
+    IEPADES ha establecido alianzas estratégicas en Guatemala y otros países de Centroamérica, consolidándose como un referente en temas de desarrollo sostenible y derechos humanos. Su labor ha sido clave para impulsar cambios positivos en comunidades marginadas, promoviendo la participación ciudadana y el acceso a oportunidades económicas y sociales.
+
+    Áreas de experticia:
+    • Construcción de paz y prevención de violencia
+    • Fortalecimiento de capacidades locales
+    • Autogestión comunitaria
+    • Desarrollo sostenible
+    • Derechos humanos
+    • Participación ciudadana
+    • Desarrollo económico local"""
+        
+        # Create text widget with scrollbar
+        text_frame = ttk.Frame(org_frame)
+        text_frame.pack(fill="both", expand=True)
+        
+        self.org_var = tk.Text(text_frame, height=12, wrap="word")
+        org_scrollbar = ttk.Scrollbar(text_frame, orient="vertical", command=self.org_var.yview)
+        self.org_var.configure(yscrollcommand=org_scrollbar.set)
+        
+        self.org_var.pack(side="left", fill="both", expand=True)
+        org_scrollbar.pack(side="right", fill="y")
+        
+        # Insert pre-filled content
+        self.org_var.insert("1.0", iepades_profile)
+
+        # Save and validation buttons
+        button_frame = ttk.Frame(scrollable_frame)
+        button_frame.pack(fill="x", pady=10)
+        
+        ttk.Button(button_frame, text="Validar datos", command=self._validate_project_inputs).pack(side="left")
+        ttk.Button(button_frame, text="Guardar datos", command=self._save_project_inputs).pack(side="right")
+        
+        # Pack the canvas and scrollbar
+        canvas.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
+        
+        # Bind mousewheel to canvas
+        def _on_mousewheel(event):
+            canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+        canvas.bind_all("<MouseWheel>", _on_mousewheel)
+
+    def _validate_project_inputs(self):
+        """Validate required project inputs"""
+        errors = []
+        
+        if not self.title_var.get().strip():
+            errors.append("• Título del proyecto es requerido")
+        
+        if not self.country_var.get().strip():
+            errors.append("• País es requerido")
+        
+        if not self.donor_var.get().strip():
+            errors.append("• Donante/Financiador es requerido")
+        
+        if not self.duration_var.get().strip():
+            errors.append("• Duración es requerida")
+        elif not self.duration_var.get().strip().isdigit():
+            errors.append("• Duración debe ser un número de meses")
+        
+        if errors:
+            messagebox.showerror("Errores de validación", 
+                            "Por favor corrige los siguientes errores:\n\n" + "\n".join(errors))
+            return False
+        else:
+            messagebox.showinfo("Validación exitosa", "✅ Todos los datos requeridos están completos")
+            return True
 
     def _save_project_inputs(self):
+        """Enhanced save method with all location and population data"""
         self._state["project"] = {
+            # Basic project info
             "title": self.title_var.get().strip(),
             "country": self.country_var.get().strip(),
             "language": self.lang_var.get(),
             "donor": self.donor_var.get().strip(),
             "duration_months": self.duration_var.get().strip(),
             "budget_cap": self.cap_var.get().strip(),
-            "org_profile": self.org_var.get("1.0","end").strip()
+            
+            # Location details
+            "coverage_type": self.coverage_type_var.get(),
+            "department": self.department_var.get().strip(),
+            "municipality": self.municipality_var.get().strip(),
+            "community": self.community_var.get().strip(),
+            "geographic_coordinates": self.geographic_coords_var.get().strip(),
+            
+            # Target population
+            "target_population": self.target_population_text.get("1.0", "end").strip(),
+            "beneficiaries_direct": self.beneficiaries_direct_var.get().strip(),
+            "beneficiaries_indirect": self.beneficiaries_indirect_var.get().strip(),
+            "demographic_focus": self.demographic_focus_var.get(),
+            
+            # Organization profile (IEPADES)
+            "org_profile": self.org_var.get("1.0", "end").strip()
         }
-        messagebox.showinfo("OK", "Datos del proyecto guardados correctamente.")
-
+        
+        messagebox.showinfo("Éxito", "✅ Datos del proyecto guardados correctamente.\n\n" +
+                        f"Proyecto: {self._state['project']['title']}\n" +
+                        f"Ubicación: {self._state['project']['municipality']}, {self._state['project']['department']}\n" +
+                        f"Duración: {self._state['project']['duration_months']} meses")
     def _build_tab2(self):
         top = ttk.Frame(self.tab2); top.pack(fill="x")
         self.tor_picker = FilePicker(top, "Seleccionar ToR (PDF/DOCX)", [("PDF","*.pdf"),("Word","*.docx")], self._on_pick_tor)
