@@ -18,16 +18,18 @@ class FilePicker(ttk.Frame):
         ttk.Label(self, text=label).pack(anchor="w")
         row = ttk.Frame(self); row.pack(fill="x")
         ttk.Entry(row, textvariable=self.var).pack(side="left", fill="x", expand=True)
-        ttk.Button(row, text="Examinar", command=self._pick).pack(side="left", padx=6)
+        self.button = ttk.Button(row, text="Examinar", command=self._pick)
+        self.button.pack(side="left", padx=6)
 
     def _pick(self):
         path = filedialog.askopenfilename(filetypes=self.patterns)
         if path:
             self.var.set(path)
             self.callback(path)
-
-# Enhanced components below
-
+    
+    def clear(self):
+        """Clear the file path"""
+        self.var.set("")
 class EnhancedLabeledEntry(ttk.Frame):
     """Enhanced labeled entry with modern styling"""
     def __init__(self, master, label, var, placeholder="", required=False):

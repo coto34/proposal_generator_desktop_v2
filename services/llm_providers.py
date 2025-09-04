@@ -84,6 +84,16 @@ class DeepSeekClient:
                 content=f"Error inesperado: {str(e)}", raw={"error": str(e)}
             )
 
+    def test_connection(self) -> bool:
+        """Test the DeepSeek API connection"""
+        if not self.api_key:
+            return False
+        try:
+            result = self.generate("Test")
+            return not result.content.startswith("Error")
+        except Exception:
+            return False
+
 
 # ---------- Sonnet / Anthropic (budget) ----------
 class SonnetClient:
@@ -95,7 +105,7 @@ class SonnetClient:
     def __init__(
         self,
         api_key: Optional[str],
-        model: str = "claude-sonnet-4-20250514",  # solid current model id
+        model: str = "claude-sonnet-4-20250514",  # Your working Sonnet 4 model # solid current model id
         temperature: float = 0.0,  # deterministic budgets
         max_tokens: int = 16000,
         base_url: str = "https://api.anthropic.com/v1",
@@ -276,14 +286,19 @@ def get_available_models() -> Dict[str, list]:
     return {
         "deepseek": ["deepseek-chat"],
         "sonnet": [
-            "claude-3-5-sonnet-20241022",  # current stable
-            "claude-3-5-sonnet-20240620",  # previous
-            "claude-sonnet-4-20250514",    # future/alt id (if enabled in your account)
+            "claude-sonnet-4-20250514",    # Your working Sonnet 4 model
         ],
     }
 
 
-def create_test_clients() -> Dict[str, Dict[str, Any]]:
+def create_test_clients():
+    """Create test client instances for the wizard"""
+    deepseek_client = DeepSeekClient(api_key=None)  # Will use env var
+    sonnet_client = SonnetClient(api_key=None)      # Will use env var
+    return deepseek_client, sonnet_client
+
+
+def get_test_status() -> Dict[str, Dict[str, Any]]:
     """
     Quick smoke test for keys and a working Anthropic model.
     Returns:
